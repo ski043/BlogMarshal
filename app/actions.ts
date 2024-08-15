@@ -207,8 +207,14 @@ export async function CreateSubscription() {
       address: "auto",
       name: "auto",
     },
-    success_url: "http://localhost:3000/dashboard/payment/success",
-    cancel_url: "http://localhost:3000/dashboard/payment/cancelled",
+    success_url:
+      process.env.NODE_ENV === "production"
+        ? "https://blog-marshal.vercel.app/dashboard/payment/success"
+        : "http://localhost:3000/dashboard/payment/success",
+    cancel_url:
+      process.env.NODE_ENV === "production"
+        ? "https://blog-marshal.vercel.app/dashboard/payment/cancelled"
+        : "http://localhost:3000/dashboard/payment/cancelled",
   });
 
   return redirect(session.url as string);

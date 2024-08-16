@@ -30,14 +30,16 @@ export async function CreateSiteAction(prevState: any, formData: FormData) {
   if (!subStatus || subStatus.status !== "active") {
     if (sites.length < 1) {
       // Allow creating a site
-      return await createSite();
+      await createSite();
+      return redirect("/dashboard/sites");
     } else {
       // user alredy has one site dont allow
       return redirect("/dashboard/pricing");
     }
   } else if (subStatus.status === "active") {
     // User has a active plan he can create sites...
-    return await createSite();
+    await createSite();
+    return redirect("/dashboard/sites");
   }
 
   async function createSite() {
@@ -67,7 +69,6 @@ export async function CreateSiteAction(prevState: any, formData: FormData) {
         userId: user.id,
       },
     });
-    redirect("/dashboard/sites");
   }
 }
 export async function CreatePostAction(prevState: any, formData: FormData) {

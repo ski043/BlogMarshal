@@ -1,6 +1,5 @@
 "use server";
 
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 import { parseWithZod } from "@conform-to/zod";
 import { PostSchema, SiteCreationSchema, siteSchema } from "./utils/zodSchemas";
@@ -30,7 +29,33 @@ export async function CreateSiteAction(prevState: any, formData: FormData) {
   if (!subStatus || subStatus.status !== "active") {
     if (sites.length < 1) {
       // Allow creating a site
-      await createSite();
+      const submission = await parseWithZod(formData, {
+        schema: SiteCreationSchema({
+          async isSubdirectoryUnique() {
+            const exisitngSubDirectory = await prisma.site.findUnique({
+              where: {
+                subdirectory: formData.get("subdirectory") as string,
+              },
+            });
+            return !exisitngSubDirectory;
+          },
+        }),
+        async: true,
+      });
+
+      if (submission.status !== "success") {
+        return submission.reply();
+      }
+
+      const response = await prisma.site.create({
+        data: {
+          description: submission.value.description,
+          name: submission.value.name,
+          subdirectory: submission.value.subdirectory,
+          userId: user.id,
+        },
+      });
+
       return redirect("/dashboard/sites");
     } else {
       // user alredy has one site dont allow
@@ -38,11 +63,6 @@ export async function CreateSiteAction(prevState: any, formData: FormData) {
     }
   } else if (subStatus.status === "active") {
     // User has a active plan he can create sites...
-    await createSite();
-    return redirect("/dashboard/sites");
-  }
-
-  async function createSite() {
     const submission = await parseWithZod(formData, {
       schema: SiteCreationSchema({
         async isSubdirectoryUnique() {
@@ -69,6 +89,7 @@ export async function CreateSiteAction(prevState: any, formData: FormData) {
         userId: user.id,
       },
     });
+    return redirect("/dashboard/sites");
   }
 }
 export async function CreatePostAction(prevState: any, formData: FormData) {
